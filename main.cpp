@@ -3,8 +3,11 @@
 # include <iostream>
 # include "shader.h"
 # include "stb_image.h"
-# include <filesystem>
+# include <glm/glm.hpp>
+# include <glm/gtc/matrix_transform.hpp>
+# include <glm/gtc/type_ptr.hpp>
 using namespace std;
+using namespace glm;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -40,11 +43,11 @@ int main()
 	Shader ourShader("vertexShaderSource.txt", "fragmentShaderSource.txt");
 	//TRIANGE
 	float vertices[] = {
-		// positions          // colors           // texture coords
-		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
+		// positions                    // texture coords
+		 0.5f,  0.5f, 0.0f,    1.0f, 1.0f, // top right
+		 0.5f, -0.5f, 0.0f,    1.0f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f,    0.0f, 0.0f, // bottom left
+		-0.5f,  0.5f, 0.0f,    0.0f, 1.0f  // top left 
 	};
 
 	unsigned int indices[] =
@@ -69,14 +72,11 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -147,18 +147,15 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
+		mat4 transform = mat4(1.0f);
+		//transform = translate(transform, vec3(0.5f,-0.5f, 0.0f));
+		transform = rotate(transform,(float)glfwGetTime(),vec3(0.0f, 0.0f, 1.0f));
 
 		ourShader.use();
-
-
-		//float timeValue = glfwGetTime();
-		//float greenValue = sin(timeValue) / 2.0f + 0.5f;
-		//int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-		//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+		unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+		glUniformMatrix4fv(transformLoc , 1, GL_FALSE, value_ptr(transform));
 		glBindVertexArray(VAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 6);
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);

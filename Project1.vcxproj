@@ -72,7 +72,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>E:\PortableApp\openGL\glfwBuildByCmake\include;E:\PortableApp\openGL\glad\include;$(IncludePath)</IncludePath>
+    <IncludePath>E:\PortableApp\openGL\glfwBuildByCmake\include;E:\PortableApp\openGL\glad\include;E:\PortableApp\openGL\glm;$(IncludePath)</IncludePath>
     <LibraryPath>E:\PortableApp\openGL\glfwBuildByCmake\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

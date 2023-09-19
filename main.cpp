@@ -2,6 +2,7 @@
 # include <GLFW/glfw3.h>
 # include <iostream>
 # include "shader.h"
+# include <stdlib.h>
 # include "stb_image.h"
 # include <glm/glm.hpp>
 # include <glm/gtc/matrix_transform.hpp>
@@ -15,7 +16,12 @@ void processInput(GLFWwindow* window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+vec3 cameraPos = vec3(0.0f, 0.0f, 3.0f);
+vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
+vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
+float deltaTime = 0.0f; // 当前帧与上一帧的时间差
+float lastFrame = glfwGetTime(); // 上一帧的时间
 
 int main()
 {
@@ -186,6 +192,8 @@ int main()
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
 	glEnable(GL_DEPTH_TEST);
+
+	
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -204,37 +212,35 @@ int main()
 		transform = rotate(transform,(float)glfwGetTime(),vec3(0.0f, 0.0f, 1.0f));
 
 		ourShader.use();
-		//transoform
-		//mat4 model = mat4(1.0f);
-		mat4 view = mat4(1.0f);
+		
+		//mat4 view = mat4(1.0f);
 		mat4 projection = mat4(1.0f);
-		//model = rotate(model, (float)glfwGetTime() *radians(50.0f),vec3(0.5f, 1.0f, 0.0f));
-		view  = translate(view,vec3(0.0f, 0.0f, -3.0f));
+		//view  = translate(view,vec3(0.0f, 0.0f, -3.0f));
 		projection = perspective(radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f,100.0f);
-		//retrieve the matrix uniform locations
-		//unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-		unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		//unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
+		//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		ourShader.setMat4("projection", value_ptr(projection));
 
-		//
-		//unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-		//glUniformMatrix4fv(transformLoc , 1, GL_FALSE, value_ptr(transform));
+		mat4 view = mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		view = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		ourShader.setMat4("view", value_ptr(view));
+
 		glBindVertexArray(VAO);
+		srand(0); //generate random seed
+		for (int i = 0; i < 10; i++) {
 
+			mat4 model = mat4(1.0f);
+			model = translate(model, cubePositions[i]);
+			model = rotate(model, (float)glfwGetTime() * radians(50.0f) , vec3(float(rand()%3), 1.0f, 0.0f)); //random rotation
+			unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 		
-		mat4 model = mat4(1.0f);
-		model = rotate(model, (float)glfwGetTime() * radians(50.0f), vec3(0.5f, 1.0f, 0.0f));
-		unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;               //求两帧时间差
 
-
-
-		
-			
-	    glDrawArrays(GL_TRIANGLES, 0, 36);
-	
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -259,4 +265,13 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+	float cameraSpeed = 30.0f * deltaTime; // adjust accordingly
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
 }
